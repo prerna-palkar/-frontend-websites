@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Advanced SnapGPT</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+  display:flex;
+  height:100vh;
+  color:white;
+}
+
+/* SIDEBAR */
+.sidebar{
+  width:220px;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(15px);
+  padding:10px;
+  overflow-y:auto;
+}
+
+.sidebar h3{
+  text-align:center;
+}
+
+.history-item{
+  padding:8px;
+  margin:5px 0;
+  background:rgba(255,255,255,0.1);
+  border-radius:10px;
+  cursor:pointer;
+  font-size:12px;
+}
+
+/* CHAT */
+.main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+
+.header{
+  padding:15px;
+  text-align:center;
+  background:rgba(0,0,0,0.3);
+  font-weight:bold;
+}
+
+/* CHAT BOX */
+.chat{
+  flex:1;
+  padding:10px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.msg{
+  max-width:70%;
+  padding:10px;
+  border-radius:20px;
+  font-size:14px;
+}
+
+.user{
+  align-self:flex-end;
+  background:#fffc00;
+  color:black;
+  border-bottom-right-radius:0;
+}
+
+.bot{
+  align-self:flex-start;
+  background:rgba(255,255,255,0.2);
+  border-bottom-left-radius:0;
+}
+
+/* INPUT */
+.input-box{
+  display:flex;
+  padding:10px;
+  background:rgba(0,0,0,0.3);
+}
+
+input{
+  flex:1;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  outline:none;
+}
+
+button{
+  margin-left:10px;
+  padding:10px 15px;
+  border:none;
+  border-radius:10px;
+  background:#fffc00;
+  color:black;
+  cursor:pointer;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HISTORY -->
+<div class="sidebar">
+  <h3>💬 History</h3>
+  <div id="history"></div>
+</div>
+
+<!-- CHAT -->
+<div class="main">
+
+  <div class="header">Advanced SnapGPT 🤖</div>
+
+  <div class="chat" id="chat"></div>
+
+  <div class="input-box">
+    <input id="input" placeholder="Type /help for commands...">
+    <button onclick="send()">Send</button>
+  </div>
+
+</div>
+
+<script>
+let chat = JSON.parse(localStorage.getItem("adv_chat")) || [];
+let history = JSON.parse(localStorage.getItem("adv_history")) || [];
+
+let chatBox = document.getElementById("chat");
+let historyBox = document.getElementById("history");
+
+/* TIME */
+function time(){
+  return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+/* RENDER CHAT */
+function render(){
+  chatBox.innerHTML="";
+  chat.forEach(m=>{
+    let div=document.createElement("div");
+    div.className="msg "+m.type;
+    div.innerText=m.text;
+    chatBox.appendChild(div);
+  });
+  chatBox.scrollTop=chatBox.scrollHeight;
+}
+
+/* HISTORY */
+function renderHistory(){
+  historyBox.innerHTML="";
+  history.forEach((h,i)=>{
+    historyBox.innerHTML+=`
+      <div class="history-item" onclick="loadHistory(${i})">
+        Chat ${i+1}
+      </div>
+    `;
+  });
+}
+
+function loadHistory(i){
+  chat = history[i];
+  save();
+  render();
+}
+
+/* COMMAND SYSTEM */
+function processCommand(text){
+  let cmd = text.toLowerCase();
+
+  if(cmd === "/help"){
+    return `Commands:
+/help - list commands
+/time - current time
+/clear - clear chat
+/joke - random joke
+/calc 5+5 - calculator`;
+  }
+
+  if(cmd === "/time"){
+    return "Current time: " + time();
+  }
+
+  if(cmd === "/clear"){
+    chat = [];
+    save();
+    render();
+    return "Chat cleared ✔";
+  }
+
+  if(cmd.startsWith("/calc")){
+    try{
+      let exp = cmd.replace("/calc","").trim();
+      return "Result: " + eval(exp);
+    }catch{
+      return "Invalid calculation";
+    }
+  }
+
+  if(cmd === "/joke"){
+    let jokes = [
+      "Why programmers hate nature? Too many bugs 🐛",
+      "I told my computer a joke… it crashed 😂",
+      "Debugging: Removing bugs and adding more 🧠"
+    ];
+    return jokes[Math.floor(Math.random()*jokes.length)];
+  }
+
+  return null;
+}
+
+/* BOT */
+function bot(msg){
+  let command = processCommand(msg);
+
+  if(command){
+    return command;
+  }
+
+  // fallback AI style responses
+  if(msg.includes("hi")) return "Hey 👋";
+  if(msg.includes("hello")) return "Hello there 😊";
+  if(msg.includes("who are you")) return "I'm SnapGPT Advanced 🤖";
+  if(msg.includes("help")) return "Type /help for commands";
+
+  return "⚠ I didn't understand that command. Try /help";
+}
+
+/* SEND */
+function send(){
+  let input=document.getElementById("input");
+  let text=input.value.trim();
+  if(text==="") return;
+
+  chat.push({text,type:"user",time:time()});
+
+  let reply = bot(text);
+
+  setTimeout(()=>{
+    chat.push({text:reply,type:"bot",time:time()});
+    save();
+    render();
+    renderHistory();
+  },400);
+
+  save();
+  render();
+  input.value="";
+}
+
+/* SAVE */
+function save(){
+  localStorage.setItem("adv_chat",JSON.stringify(chat));
+  localStorage.setItem("adv_history",JSON.stringify(history));
+}
+
+/* INIT */
+render();
+renderHistory();
+</script>
+
+</body>
+</html>
