@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Voting Arena</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: radial-gradient(circle at top, #0f2027, #203a43, #000);
+    color: white;
+    overflow-x: hidden;
+}
+
+header {
+    text-align: center;
+    padding: 20px;
+    font-size: 30px;
+    letter-spacing: 3px;
+    font-weight: bold;
+}
+
+/* Arena */
+.arena {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    margin-top: 50px;
+}
+
+/* Cards */
+.card {
+    width: 220px;
+    height: 300px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(15px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.4s;
+    position: relative;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: scale(1.1);
+}
+
+/* Glow Effects */
+.card.left:hover {
+    box-shadow: 0 0 30px #00f2ff;
+}
+.card.right:hover {
+    box-shadow: 0 0 30px #ff00c8;
+}
+
+/* Selected animation */
+.selected {
+    transform: scale(1.2);
+    border: 2px solid white;
+}
+
+/* VS Text */
+.vs {
+    font-size: 40px;
+    font-weight: bold;
+}
+
+/* Result Bar */
+.result {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.bar {
+    width: 80%;
+    height: 20px;
+    margin: auto;
+    background: #333;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.fill {
+    height: 100%;
+    width: 50%;
+    background: linear-gradient(90deg, #00f2ff, #ff00c8);
+    transition: 0.5s;
+}
+
+/* Button */
+button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #00f2ff, #ff00c8);
+    color: white;
+    cursor: pointer;
+}
+
+/* Input */
+.creator {
+    text-align: center;
+    margin-top: 50px;
+}
+
+input {
+    padding: 10px;
+    margin: 5px;
+    border-radius: 10px;
+    border: none;
+}
+</style>
+</head>
+
+<body>
+
+<header>⚔️ Voting Arena</header>
+
+<div class="arena">
+    <div class="card left" onclick="vote(0)" id="leftCard">
+        <h2 id="leftText">Option A</h2>
+        <p id="leftVotes">0 votes</p>
+    </div>
+
+    <div class="vs">VS</div>
+
+    <div class="card right" onclick="vote(1)" id="rightCard">
+        <h2 id="rightText">Option B</h2>
+        <p id="rightVotes">0 votes</p>
+    </div>
+</div>
+
+<div class="result">
+    <h3>Live Result</h3>
+    <div class="bar">
+        <div class="fill" id="fillBar"></div>
+    </div>
+</div>
+
+<div class="creator">
+    <h3>Create Battle</h3>
+    <input id="opt1" placeholder="Option A">
+    <input id="opt2" placeholder="Option B">
+    <br>
+    <button onclick="createBattle()">Start Battle</button>
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("arena")) || {
+    options: ["Apple", "Android"],
+    votes: [0, 0]
+};
+
+function save() {
+    localStorage.setItem("arena", JSON.stringify(data));
+}
+
+function render() {
+    document.getElementById("leftText").innerText = data.options[0];
+    document.getElementById("rightText").innerText = data.options[1];
+
+    document.getElementById("leftVotes").innerText = data.votes[0] + " votes";
+    document.getElementById("rightVotes").innerText = data.votes[1] + " votes";
+
+    let total = data.votes[0] + data.votes[1];
+    let percent = total ? (data.votes[0] / total) * 100 : 50;
+
+    document.getElementById("fillBar").style.width = percent + "%";
+}
+
+function vote(index) {
+    data.votes[index]++;
+
+    document.getElementById(index === 0 ? "leftCard" : "rightCard")
+        .classList.add("selected");
+
+    setTimeout(() => {
+        document.getElementById("leftCard").classList.remove("selected");
+        document.getElementById("rightCard").classList.remove("selected");
+    }, 300);
+
+    save();
+    render();
+}
+
+function createBattle() {
+    let a = document.getElementById("opt1").value;
+    let b = document.getElementById("opt2").value;
+
+    if (!a || !b) {
+        alert("Enter both options!");
+        return;
+    }
+
+    data = {
+        options: [a, b],
+        votes: [0, 0]
+    };
+
+    save();
+    render();
+}
+
+render();
+</script>
+
+</body>
+</html>
